@@ -135,98 +135,10 @@ def main():
 
 
     logger.write("Metrics calculation...")
-    result = recall_precision_score(y_test_prob, y_test)
+    recall_precision_score(y_test_prob, y_test)
 
     print("")
-    return result
 
-# def train(X_train, y_train, model, n_stat_features, n_features, train_leaf_idxs, early_stopping):
-#
-#     try:
-#         list(train_leaf_idxs)
-#         leaf_dim = train_leaf_idxs.shape[1]
-#         X_train = np.concatenate((X_train, train_leaf_idxs), axis=1)
-#         # X_train = torch.tensor(X_train, dtype=torch.float)
-#     except:
-#         pass
-#
-#     X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.15, shuffle = False, random_state=RANDOM_STATE)
-#
-#     X_train = torch.tensor(X_train, dtype=torch.float)
-#     y_train = torch.tensor(y_train, dtype=torch.float)
-#     y_valid = torch.tensor(y_valid, dtype=torch.float)
-#
-#     train_dataset = TensorDataset(X_train, y_train)
-#     train_data_loader = DataLoader(train_dataset, batch_size=256, shuffle = True)
-#
-#     criterion = nn.BCELoss()
-#     optimizer = torch.optim.Adam(model.parameters(), lr = 0.001, weight_decay=2e-6)
-#
-#     epoch = 40
-#     for epoch in range(epoch):
-#         losses = []
-#         model.train()
-#         for idx, minibatch_data in enumerate(train_data_loader):
-#             if idx % 1000 == 0:
-#                 logger.write(f"Minibatch: {idx}")
-#             X_minibatch = minibatch_data[0]
-#             y_minibatch = minibatch_data[1]
-#
-#             embeds_input_minibatch = []
-#             for i in range(n_stat_features, n_features):
-#                 embeds_input_minibatch.append(torch.tensor(X_minibatch[:, i],dtype=torch.long))
-#             try:
-#                 list(train_leaf_idxs)
-#                 embeds_input_minibatch.append(torch.tensor(X_minibatch[:, -leaf_dim:-(leaf_dim-100)], dtype=torch.long))
-#             except:
-#                 pass
-#
-#             stat_matrix_minibatch = X_minibatch[:, :n_stat_features]
-#             train_data_minibatch = [stat_matrix_minibatch, embeds_input_minibatch]
-#
-#             optimizer.zero_grad()
-#             y_prob_minibatch = model(train_data_minibatch)
-#             loss = criterion(y_prob_minibatch.squeeze(), y_minibatch)
-#             losses.append(loss)
-#
-#             # Backward pass
-#             loss.backward()
-#             utils.clip_grad_value_(model.parameters(), 4)
-#             optimizer.step()
-#
-#         train_loss = sum(losses)/len(losses)
-#
-#         model.eval()
-#         stat_matrix_valid = X_valid[:, :n_stat_features]
-#         embeds_input_valid = []
-#         for i in range(n_stat_features, n_features):
-#             embeds_input_valid.append(torch.tensor(X_valid[:, i], dtype=torch.long))
-#         try:
-#             list(train_leaf_idxs)
-#             embeds_input_valid.append(torch.tensor(X_valid[:, -leaf_dim:-(leaf_dim-100)], dtype=torch.long))
-#         except:
-#             pass
-#
-#         stat_matrix_valid = torch.tensor(stat_matrix_valid, dtype=torch.float)
-#         # embeds_input_valid = torch.tensor(embeds_input_valid, dtype=torch.long)
-#
-#         valid_data = [stat_matrix_valid, embeds_input_valid]
-#
-#
-#         y_valid_prob = model(valid_data)
-#         valid_loss = criterion(y_valid_prob.squeeze(), y_valid)
-#
-#         logger.write(f"Epoch: {epoch}: train loss:{train_loss}, valid loss:{valid_loss}")
-#
-#
-#
-#         if epoch > 10:
-#             early_stopping(valid_loss, model)
-#             if early_stopping.early_stop:
-#                 logger.write("Early stopping")
-#                 break
-#
-#     return model
 
 def train(X_train, y_train, model, n_stat_features, n_features, early_stopping):
     setup_seeds(RANDOM_STATE)
@@ -321,8 +233,6 @@ def recall_precision_score(y_prob, y_true):
     logger.write(f"precision: {recall_90[1]}, recall: {recall_90[2]} at split: {recall_90[0]} when precision is 0.90")
     logger.write(f"precision: {recall_85[1]}, recall: {recall_85[2]} at split: {recall_85[0]} when precision is 0.85")
     logger.write(f"precision: {recall_80[1]}, recall: {recall_80[2]} at split: {recall_80[0]} when precision is 0.80")
-    test_metrics = (recall_90, recall_85, recall_80)
-    return test_metrics
 
 def setup_seeds(seed=1234):
     random.seed(seed)

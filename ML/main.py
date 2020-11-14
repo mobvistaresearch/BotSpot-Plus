@@ -26,14 +26,11 @@ from log import Logger
 INPUT_PATH = "/data/xiliang.wang/BotSpot-Plus/input"
 
 RANDOM_STATE = 1234
-BLOCK_STR = "without_block"
-TIME_SPAN = "7DAYS"
 
 logger = Logger("./logs")
 
 
 def main():
-    # model_use = "lightgbm"
     max_depth = 5
     num_iterations = 500
 
@@ -103,9 +100,8 @@ def main():
 
     # calc metrics
     logger.write("Metrics calculation...")
-    result = recall_precision_score(test_prob, y_test)
+    recall_precision_score(test_prob, y_test)
 
-    # return result
 
 
 def recall_precision_score(y_prob, y_true):
@@ -126,7 +122,6 @@ def recall_precision_score(y_prob, y_true):
     logger.write(f"precision: {recall_90[0][1]}, recall: {recall_90[0][2]} at split: {recall_90[0][0]} when precision is 0.90")
     logger.write(f"precision: {recall_85[0][1]}, recall: {recall_85[0][2]} at split: {recall_85[0][0]} when precision is 0.85")
     logger.write(f"precision: {recall_80[0][1]}, recall: {recall_80[0][2]} at split: {recall_80[0][0]} when precision is 0.80")
-    return [recall_90[0], recall_85[0], recall_80[0]]
 
 
 if __name__ =="__main__":
