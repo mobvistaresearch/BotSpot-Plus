@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import sys
+import argparse
 sys.path.append(r'./utils')
 
 from sklearn.model_selection import train_test_split
@@ -31,8 +32,15 @@ logger = Logger("./logs")
 
 
 def main():
-    max_depth = 5
-    num_iterations = 500
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, help='choose dataset')
+    parser.add_argument('--num_trees', type=int, help='the number of trees')
+    parser.add_argument("--max_depth", type=int, help="the max_depth of lightGBM")
+    args = parser.parse_args()
+    dataset = args.dataset
+    max_depth = args.max_depth
+    num_iterations = args.num_trees
 
     lgb_params = {'num_leaves': 18,
         'min_data_in_leaf': 30,
@@ -55,7 +63,7 @@ def main():
         'min_sum_hessian_in_leaf': 10.0,
         'boost_from_average':'false'}
 
-    dataset = "dataset1"
+    # dataset = "dataset2"
     logger.write("")
     logger.write(f"Current model: LightGBM")
     logger.write(f"Current dataset: {dataset}")

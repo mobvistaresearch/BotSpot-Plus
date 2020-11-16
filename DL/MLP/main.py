@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import sys
+import argparse
 sys.path.append(r'./utils')
 import random
 
@@ -18,7 +19,6 @@ from skopt.utils import use_named_args
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset,DataLoader,WeightedRandomSampler
@@ -45,7 +45,10 @@ logger = Logger("./logs")
 
 def main():
 
-    dataset = "dataset1"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, help='choose dataset')
+    args = parser.parse_args()
+    dataset = args.dataset
     logger.write("")
     logger.write(f"Current model: MLP")
     logger.write(f"Current dataset: {dataset}")
