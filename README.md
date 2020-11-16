@@ -28,5 +28,5 @@ LightGBM:
 &nbsp;&nbsp;&nbsp;&nbsp;```python3 main.py --dataset dataset1 --num_trees 500 --max_depth 5```  
 MLP:   
 &nbsp;&nbsp;&nbsp;&nbsp;```cd DL/MLP```  
-&nbsp;&nbsp;&nbsp;&nbsp;```# set which dataset is used for training``` 
+&nbsp;&nbsp;&nbsp;&nbsp;```# set which dataset is used for training```  
 &nbsp;&nbsp;&nbsp;&nbsp;```python3 main.py --dataset dataset1```  
