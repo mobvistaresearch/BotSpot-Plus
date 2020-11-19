@@ -33,7 +33,8 @@ MLP:
 GNN：
 &nbsp;&nbsp;&nbsp;&nbsp;```cd DL/GNN```
 &nbsp;&nbsp;&nbsp;&nbsp;```python3 main.py $dataset$ $use_gbm$ $use_hierarchy$  $split_normal_bot$```
-
-&nbsp;&nbsp;&nbsp;&nbsp;```# $dataset$: the dataset specified, e.g., dataset1, dataset2, etc.<br> #use_gbm#: whether to use gbm model for global context or not.e.g., take True or False.<br> #use_hierarchy#:whether to use super device node, take True or False.<br> split_normal_bot#: whether split normal and bot installs for message passing.e.g., True if split normal and bot in message passing '''
-
-&nbsp;&nbsp;&nbsp;&nbsp;```# example usage: python3 main.py dataset1 True True  True ```
+&nbsp;&nbsp;&nbsp;&nbsp;```$dataset$: the dataset specified, e.g., dataset1, dataset2, etc.```  
+&nbsp;&nbsp;&nbsp;&nbsp;```$use_gbm$: whether to use gbm model for global context or not.e.g., take True or False.```   
+&nbsp;&nbsp;&nbsp;&nbsp;```$use_hierarchy$:whether to use super device node, take True or False.```  
+&nbsp;&nbsp;&nbsp;&nbsp;```$split_normal_bot$:whether to split normal install and bot install during message passing```  
+&nbsp;&nbsp;&nbsp;&nbsp;```# example usage: python3 main.py dataset1 True True True ```  
