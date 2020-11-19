@@ -33,7 +33,7 @@ from log import Logger
 
 
 
-INPUT_PATH = "/data/xiliang.wang/BotSpot-Plus/input"
+INPUT_PATH = "../../input"
 
 
 

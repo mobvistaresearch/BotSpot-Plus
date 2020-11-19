@@ -24,7 +24,7 @@ from utils import pickle_load, pickle_dump
 from log import Logger
 
 
-INPUT_PATH = "/data/xiliang.wang/BotSpot-Plus/input"
+INPUT_PATH = "../../input"
 
 RANDOM_STATE = 1234
 

@@ -30,3 +30,10 @@ MLP:
 &nbsp;&nbsp;&nbsp;&nbsp;```cd DL/MLP```  
 &nbsp;&nbsp;&nbsp;&nbsp;```# set which dataset is used for training```  
 &nbsp;&nbsp;&nbsp;&nbsp;```python3 main.py --dataset dataset1```  
+GNN：
+&nbsp;&nbsp;&nbsp;&nbsp;```cd DL/GNN```
+&nbsp;&nbsp;&nbsp;&nbsp;```python3 main.py $dataset$ $use_gbm$ $use_hierarchy$  $split_normal_bot$```
+
+&nbsp;&nbsp;&nbsp;&nbsp;```# $dataset$: the dataset specified, e.g., dataset1, dataset2, etc. #use_gbm#: whether to use gbm model for global context or not.e.g., take True or False #use_hierarchy#:whether to use super device node, take True or False. #split_normal_bot#: whether split normal and bot installs for message passing.e.g., True if split normal and bot in message passing```
+
+&nbsp;&nbsp;&nbsp;&nbsp;```# example usage: python3 main.py dataset1 True True  True ```
