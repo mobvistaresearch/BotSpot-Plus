@@ -48,9 +48,9 @@ GraphSAGE、BotSpot、BotSpot++:
 &nbsp;&nbsp;&nbsp;&nbsp;GraphSAGE usage:  
 &nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1 --use_gbm false  --use_stratified false```  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```--use_botspot_plus false --use_self_attn false --device_num 0```  
-&nbsp;&nbsp;&nbsp;&nbsp;BotSpot usage:
+&nbsp;&nbsp;&nbsp;&nbsp;BotSpot usage:  
 &nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1 --use_gbm true --use_stratified true```  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```--use_botspot_plus false --use_self_attn false --device_num 1```  
-&nbsp;&nbsp;&nbsp;&nbsp;BotSpot++ usage:
+&nbsp;&nbsp;&nbsp;&nbsp;BotSpot++ usage:  
 &nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1 --use_gbm true --use_stratified true```  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```--use_botspot_plus true --use_self_attn true --device_num 2```
