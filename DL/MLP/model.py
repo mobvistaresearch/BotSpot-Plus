@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.init as init
 
 
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# device = torch.device("cpu")
 
 class MLP(torch.nn.Module):
     def __init__(self, input_size, hidden_size, embeds_desc, num_classes, p):
@@ -30,13 +32,13 @@ class MLP(torch.nn.Module):
             embed_output = embed(embed_input)
             inputs.append(embed_output)
 
-        x = torch.cat(inputs, 1)
+        x = torch.cat(inputs, 1).to(device)
         x = self.fc1(x)
-        x = self.dropout(x)
         x = self.relu(x)
+        x = self.dropout(x)
         x = self.fc2(x)
-        x = self.dropout(x)
         x = self.relu(x)
+        x = self.dropout(x)
         x = self.fc3(x)
         x = self.sigmoid(x)
         return x

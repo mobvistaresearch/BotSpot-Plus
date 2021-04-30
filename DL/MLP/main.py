@@ -13,9 +13,6 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import StandardScaler
-from skopt import gp_minimize
-from skopt.space import Real, Integer
-from skopt.utils import use_named_args
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
@@ -33,26 +30,34 @@ from log import Logger
 
 
 
-INPUT_PATH = "../../input"
-
-
-
+INPUT_PATH = "../../datasets"
+MODEL_PATH = "./models"
 
 RANDOM_STATE = 1234
 
 logger = Logger("./logs")
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# device = torch.device('cpu')
+
+logger.write(f"use device: {device}")
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, help='choose dataset')
+
+args = parser.parse_args()
+dataset = args.dataset
+logger.write("")
+logger.write(f"Current model: MLP")
+logger.write(f"Current dataset: {dataset}")
 
 
 def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, help='choose dataset')
-    args = parser.parse_args()
-    dataset = args.dataset
-    logger.write("")
-    logger.write(f"Current model: MLP")
-    logger.write(f"Current dataset: {dataset}")
-
+    num_epoches = 40
+    batch_size = 256
+    num_classes = 1
+    embed_size = 16
+    p = 0.1
+    hidden_size = 64
     setup_seeds(RANDOM_STATE)
 
     # Data loading
@@ -61,14 +66,21 @@ def main():
     train_df = pd.read_csv(train_file)
     test_df = pd.read_csv(test_file)
 
+
+
+
     columns = train_df.columns
     stat_columns_file = osp.join(INPUT_PATH, "stat_columns.txt")
     category_columns_file = osp.join(INPUT_PATH, "category_columns.txt")
     stat_columns = pickle_load(stat_columns_file)
-    category_columns = pickle_load(category_columns_file)
+    category_columns = pickle_load(category_columns_file)[:-1]
+
     feature_columns =  stat_columns + category_columns
     normalized_columns = [stat_columns[-2]]
     except_normalized_columns = [column for column in feature_columns if column not in normalized_columns]
+    print(f"category_columns: {category_columns}")
+    print(f"normalized_columns: {normalized_columns}")
+    print(f"except_normalized_columns: {except_normalized_columns}")
 
     standard_scaler = StandardScaler()
     standard_scaler.fit(train_df[normalized_columns].values)
@@ -90,32 +102,26 @@ def main():
     n_category_features = len(category_columns)
     n_stat_features = len(stat_columns)
 
-
-    n_classes = 1
     embeds_desc = []
-
     X_total = np.concatenate((X_train, X_test), axis=0)
     for i in range(n_stat_features, n_features):
         cur_column = X_total[:, i]
         num_embed = int(max(cur_column) + 1)
-        embeds_desc.append([num_embed, 16])
+        embeds_desc.append([num_embed, embed_size])
 
     # Train process
-
     logger.write("Training...")
-    model = MLP(n_stat_features, 64, embeds_desc, n_classes, 0.1)
-    model_path = osp.join(INPUT_PATH, "mlp", dataset)
-    if not osp.exists(model_path):
-        os.makedirs(model_path)
-    model_file = osp.join(model_path, "checkpoint.pt")
+    model = MLP(n_stat_features, hidden_size, embeds_desc, num_classes, p)
+    model.to(device)
+    if not osp.exists(MODEL_PATH):
+        os.makedirs(MODEL_PATH)
+    model_file = osp.join(MODEL_PATH, f"model_{dataset}.pt")
     patience = 6
     early_stopping = EarlyStopping(patience=patience, verbose=True, path=model_file)
 
     logger.write(model)
 
-    train(X_train, y_train, model, n_stat_features, n_features, early_stopping)
-
-
+    train(X_train, y_train, model, n_stat_features, n_features, early_stopping, num_epoches, batch_size)
 
     # Predict process
     logger.write("Predicting...")
@@ -123,13 +129,12 @@ def main():
     embeds_input_test = []
     for i in range(n_stat_features, n_features):
         embeds_input_test.append(X_test[:, i])
-    stat_matrix_test = torch.tensor(stat_matrix_test, dtype=torch.float)
-    embeds_input_test = torch.tensor(embeds_input_test, dtype=torch.long)
+    stat_matrix_test = torch.tensor(stat_matrix_test, dtype=torch.float).to(device)
+    embeds_input_test = torch.tensor(embeds_input_test, dtype=torch.long).to(device)
     test_data = [stat_matrix_test, embeds_input_test]
 
     model.load_state_dict(torch.load(model_file))
-
-    y_test_prob = predict(test_data, model)
+    y_test_prob = predict(test_data, model).cpu().numpy()
 
     # calc metrics
 
@@ -143,7 +148,7 @@ def main():
     print("")
 
 
-def train(X_train, y_train, model, n_stat_features, n_features, early_stopping):
+def train(X_train, y_train, model, n_stat_features, n_features, early_stopping, num_epoches, batch_size):
     setup_seeds(RANDOM_STATE)
 
     X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.15, shuffle = False, random_state=RANDOM_STATE)
@@ -153,26 +158,28 @@ def train(X_train, y_train, model, n_stat_features, n_features, early_stopping):
     y_valid = torch.tensor(y_valid, dtype=torch.float)
 
     train_dataset = TensorDataset(X_train, y_train)
-    train_data_loader = DataLoader(train_dataset, batch_size=256, shuffle = True)
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr = 0.001, weight_decay=2e-6)
 
-    epoch = 40
-    for epoch in range(epoch):
+    for epoch in range(num_epoches):
         losses = []
         model.train()
         for idx, minibatch_data in enumerate(train_data_loader):
             if idx % 1000 == 0:
                 logger.write(f"Minibatch: {idx}")
             X_minibatch = minibatch_data[0]
-            y_minibatch = minibatch_data[1]
+            y_minibatch = minibatch_data[1].to(device)
+            # y_minibatch.to(device)
 
             embeds_input_minibatch = []
             for i in range(n_stat_features, n_features):
-                embeds_input_minibatch.append(torch.tensor(X_minibatch[:, i],dtype=torch.long))
+                embeds_input_minibatch.append(torch.tensor(X_minibatch[:, i], dtype=torch.long))
 
             stat_matrix_minibatch = X_minibatch[:, :n_stat_features]
+            stat_matrix_minibatch = stat_matrix_minibatch.to(device)
+            embeds_input_minibatch = torch.stack(embeds_input_minibatch).to(device)
             train_data_minibatch = [stat_matrix_minibatch, embeds_input_minibatch]
 
             optimizer.zero_grad()
@@ -184,7 +191,7 @@ def train(X_train, y_train, model, n_stat_features, n_features, early_stopping):
             utils.clip_grad_value_(model.parameters(), 4)
             optimizer.step()
 
-        train_loss = sum(losses)/len(losses)
+        train_loss = sum(losses) / len(losses)
 
         model.eval()
         stat_matrix_valid = X_valid[:, :n_stat_features]
@@ -192,11 +199,14 @@ def train(X_train, y_train, model, n_stat_features, n_features, early_stopping):
         for i in range(n_stat_features, n_features):
             embeds_input_valid.append(torch.tensor(X_valid[:, i], dtype=torch.long))
 
-        stat_matrix_valid = torch.tensor(stat_matrix_valid, dtype=torch.float)
+        stat_matrix_valid = torch.tensor(stat_matrix_valid, dtype=torch.float).to(device)
+        embeds_input_valid = torch.stack(embeds_input_valid).to(device)
 
         valid_data = [stat_matrix_valid, embeds_input_valid]
 
         y_valid_prob = model(valid_data)
+        y_valid = y_valid.to(device)
+
         valid_loss = criterion(y_valid_prob.squeeze(), y_valid)
 
         logger.write(f"Epoch: {epoch}: train loss:{train_loss}, valid loss:{valid_loss}")
@@ -227,7 +237,6 @@ def recall_precision_score(y_prob, y_true):
         recall = recall_score(y_true, y_pred)
         precision = precision_score(y_true, y_pred)
         P_R_scores.append((i, precision, recall))
-
 
     recall_90 = sorted(P_R_scores, key=lambda x: abs(x[1] - 0.9))[0]
     recall_85 = sorted(P_R_scores, key=lambda x: abs(x[1] - 0.85))[0]

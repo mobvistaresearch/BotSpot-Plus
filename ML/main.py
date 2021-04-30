@@ -11,9 +11,6 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
 from sklearn.datasets import load_svmlight_file
-from skopt import gp_minimize
-from skopt.space import Real, Integer
-from skopt.utils import use_named_args
 import numpy as np
 import pandas as pd
 
@@ -24,24 +21,25 @@ from utils import pickle_load, pickle_dump
 from log import Logger
 
 
-INPUT_PATH = "../../input"
+INPUT_PATH = "../datasets"
+MODEL_PATH = "./models"
 
 RANDOM_STATE = 1234
 
 logger = Logger("./logs")
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', type=str, help='choose dataset')
+parser.add_argument('--num_trees', type=int, help='the number of trees')
+parser.add_argument("--max_depth", type=int, help="the max_depth of lightGBM")
+
+args = parser.parse_args()
+dataset = args.dataset
+max_depth = args.max_depth
+num_iterations = args.num_trees
+
 
 def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, help='choose dataset')
-    parser.add_argument('--num_trees', type=int, help='the number of trees')
-    parser.add_argument("--max_depth", type=int, help="the max_depth of lightGBM")
-    args = parser.parse_args()
-    dataset = args.dataset
-    max_depth = args.max_depth
-    num_iterations = args.num_trees
-
     lgb_params = {'num_leaves': 18,
         'min_data_in_leaf': 30,
         'tree_learner': 'serial',
@@ -77,7 +75,10 @@ def main():
     stat_columns_file = osp.join(INPUT_PATH, "stat_columns.txt")
     category_columns_file = osp.join(INPUT_PATH, "category_columns.txt")
     stat_columns = pickle_load(stat_columns_file)
-    category_columns = pickle_load(category_columns_file)
+    category_columns = pickle_load(category_columns_file)[:-1]
+
+    print(f"category_columns: {category_columns}")
+    print(f"stat_columns: {stat_columns}")
     feature_columns = stat_columns + category_columns
 
     X_train = train_df[feature_columns].values
@@ -95,6 +96,14 @@ def main():
 
     category_idx = [i for i in range(len(feature_columns)) if feature_columns[i] in category_columns]
     model = lgb_classifier(X_train, y_train, X_test, y_test, category_idx, lgb_params)
+
+    logger.write("Saving model...")
+    if not osp.exists(MODEL_PATH):
+        os.makedirs(MODEL_PATH)
+    model_file = osp.join(MODEL_PATH, f"model_{dataset}.pt")
+    model.save_model(model_file)
+
+    # model = lgb.Booster(model_file=model_file)
 
     # Predict process
     logger.write("Predicting...")
@@ -120,8 +129,6 @@ def recall_precision_score(y_prob, y_true):
         precision = precision_score(y_true, y_pred)
         P_R_scores.append((i, precision, recall))
 
-        if precision >= 0.95:
-            break
 
     recall_90 = sorted(P_R_scores, key=lambda x: abs(x[1] - 0.9))
     recall_85 = sorted(P_R_scores, key=lambda x: abs(x[1] - 0.85))
