@@ -8,33 +8,23 @@ import torch.nn.functional as F
 import numpy as np
 
 
-device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # device = torch.device("cpu")
 
 class GraphConsis(torch.nn.Module):
-    def __init__(self, edge_index_train, combin_feats, device_feats, combin_category_embeds_desc, device_category_embeds_desc, hidden_size, num_classes, batch_size, p):
+    def __init__(self, edge_index_train, combin_feats, device_feats, combin_category_embeds_desc, device_category_embeds_desc, hidden_size, num_classes, batch_size, p, device):
         super(GraphConsis, self).__init__()
         context_dim = 16
+        self.device= device
         self.context_embed = nn.Embedding(len(device_feats), context_dim)
 
         self.combin_feats = torch.from_numpy(combin_feats).float()
-        self.device_feats = torch.from_numpy(device_feats).float().to(device)
-        # self.device_feats = torch.cat([self.context_vec, torch.from_numpy(device_feats).float()], dim=1)
+        self.device_feats = torch.from_numpy(device_feats).float().to(self.device)
 
         self.edge_matrix = torch.from_numpy(self.gen_edge_matrix(edge_index_train))
 
         self.num_combin_categories = len(combin_category_embeds_desc)
         self.num_device_categories = len(device_category_embeds_desc)
-
-        # self.combin_neibrs_cache = {}
-        #
-        # for edge_index in edge_index_train:
-        #     combin_idx = edge_index[0]
-        #     device_idx = edge_index[1]
-        #     if combin_idx in self.combin_neibrs_cache:
-        #         self.combin_neibrs_cache[combin_idx].add(device_idx)
-        #     else:
-        #         self.combin_neibrs_cache[combin_idx] = set([device_idx])
 
         self.combin_neibrs_normal_cache = {}
         self.combin_neibrs_bot_cache = {}
@@ -75,8 +65,7 @@ class GraphConsis(torch.nn.Module):
         self.combin_trans_fc = nn.Linear(combin_input_size, 64)
         self.device_trans_fc = nn.Linear(device_input_size, 64)
 
-        # self.fc1 = nn.Linear(64, 32)
-        self.fc1 = nn.Linear(64 + device_input_size, hidden_size)
+        self.fc1 = nn.Linear(64 + device_input_size + combin_input_size, hidden_size)
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, num_classes)
         self.relu = nn.ReLU()
@@ -86,17 +75,24 @@ class GraphConsis(torch.nn.Module):
 
     def forward(self, edge_index):
         combin_idxes = edge_index[:, 0]
-        device_idxes = edge_index[:, 1].to(device)
+        device_idxes = edge_index[:, 1]
 
-        combin_feats_batch = self.combin_feats[combin_idxes].to(device)
-        device_feats_batch = self.device_feats[device_idxes].to(device)
-        context_feats_batch = self.context_embed(device_idxes.view(-1, 1)).squeeze(1)
-        device_feats_batch = self.concat_embed_feats(device_feats_batch, self.device_embeds, self.num_device_categories)
-        device_feats_batch = torch.cat([context_feats_batch, device_feats_batch], dim=1)
+        combin_feats_batch = self.combin_feats[combin_idxes].to(self.device)
+        # device_feats_batch = self.device_feats[device_idxes].to(device)
+        device_feats = self.concat_embed_feats(self.device_feats, self.device_embeds, self.num_device_categories)
+        tmp_device_idxes = torch.tensor([i for i in range(len(self.device_feats))], dtype=torch.long).view(-1, 1).to(self.device)
+        device_context_feats = self.context_embed(tmp_device_idxes).squeeze(1)
+        device_feats = torch.cat([device_context_feats, device_feats], dim=1)
+        device_feats_batch = device_feats[device_idxes]
+
+        # context_feats_batch = self.context_embed(device_idxes.view(-1, 1)).squeeze(1)
+        # device_feats_batch = self.concat_embed_feats(device_feats_batch, self.device_embeds, self.num_device_categories)
+        # device_feats_batch = torch.cat([context_feats_batch, device_feats_batch], dim=1)
 
         combin_feats_batch = self.concat_embed_feats(combin_feats_batch, self.combin_embeds, self.num_combin_categories)
-        combin_feats_batch = self.mean_agg(combin_idxes, combin_feats_batch)
-        fusion_feats = torch.cat([device_feats_batch, combin_feats_batch], dim=1)
+
+        combin_neibrs_feats = self.mean_agg(combin_idxes, combin_feats_batch, device_feats)
+        fusion_feats = torch.cat([device_feats_batch, combin_feats_batch, combin_neibrs_feats], dim=1)
         x = self.fc1(fusion_feats)
         x = self.relu(x)
         x = self.dropout(x)
@@ -126,38 +122,7 @@ class GraphConsis(torch.nn.Module):
         return edge_matrix
 
 
-    # def mean_agg(self, combin_idxes, combin_feats):
-    #     combin_idxes = combin_idxes.cpu().numpy()
-    #     device_idxes = set()
-    #     for combin_idx in combin_idxes:
-    #         device_idxes = device_idxes.union(self.combin_neibrs_cache[combin_idx])
-    #     device_idxes = list(device_idxes)
-    #     device_idxes.sort()
-    #     combin_neibrs_feats = self.device_feats[device_idxes].to(device)
-    #     combin_neibrs_feats = self.concat_embed_feats(combin_neibrs_feats, self.device_embeds, self.num_device_categories)
-    #     tmp_device_idxes = torch.tensor(device_idxes, dtype=torch.long).view(-1, 1).to(device)
-    #     combin_neibrs_context_feats = self.context_embed(tmp_device_idxes).squeeze(1)
-    #     combin_neibrs_feats = torch.cat([combin_neibrs_context_feats, combin_neibrs_feats], dim=1)
-    #     edge_matrix_batch = self.edge_matrix[combin_idxes][:, device_idxes]
-    #     combin_neibrs_idxes = [np.where(edges == 1)[0] for edges in edge_matrix_batch]
-    #
-    #     neibrs_agg_feats = []
-    #
-    #     for cur_combin_idx, cur_combin_feats, cur_combin_neibrs_idxes in zip(combin_idxes, combin_feats, combin_neibrs_idxes):
-    #         cur_combin_neibrs_feats = combin_neibrs_feats[cur_combin_neibrs_idxes]
-    #         cur_neibrs_agg_feats = self.sample_combin_neibrs_feats(cur_combin_feats, cur_combin_neibrs_feats, 50, 0.001)
-    #         cur_neibrs_agg_feats = cur_neibrs_agg_feats.mean(dim=0).view(1, -1)
-    #         neibrs_agg_feats.append(cur_neibrs_agg_feats)
-    #
-    #     neibrs_agg_feats = torch.cat(neibrs_agg_feats, dim=0)
-    #     return neibrs_agg_feats
-
-    def mean_agg(self, combin_idxes, combin_feats):
-        device_feats = self.concat_embed_feats(self.device_feats, self.device_embeds, self.num_device_categories)
-        tmp_device_idxes = torch.tensor([i for i in range(len(self.device_feats))], dtype=torch.long).view(-1, 1).to(device)
-        device_context_feats = self.context_embed(tmp_device_idxes).squeeze(1)
-        device_feats = torch.cat([device_context_feats, device_feats], dim=1)
-
+    def mean_agg(self, combin_idxes, combin_feats, device_feats):
         neibrs_agg_feats = []
         for combin_idx, cur_combin_feats in zip(combin_idxes, combin_feats):
             normal_device_idxes = self.combin_neibrs_normal_cache[combin_idx.item()]

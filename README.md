@@ -32,7 +32,7 @@ MLP:
 GAT:   
 &nbsp;&nbsp;&nbsp;&nbsp;```cd DL/GAT```  
 &nbsp;&nbsp;&nbsp;&nbsp;```# set which dataset to use for training```  
-&nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1```  
+&nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1 --device_num 0```  
 GraphConsis:   
 &nbsp;&nbsp;&nbsp;&nbsp;```cd DL/GraphConsis```  
 &nbsp;&nbsp;&nbsp;&nbsp;```# set which dataset and which gpu device to use for training```  

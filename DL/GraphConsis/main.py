@@ -31,16 +31,20 @@ MODEL_PATH = "./models"
 RANDOM_STATE = 1234
 
 logger = Logger("./logs")
-device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # device = torch.device("cpu")
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, help='choose dataset')
+parser.add_argument('--device_num', type=int, help='choose gpu device')
+
 args = parser.parse_args()
 
 dataset = args.dataset
+device_num = args.device_num
 logger.write("")
 logger.write(f"Current model: GraphConsis")
 logger.write(f"Current dataset: {dataset}")
+device = torch.device(f'cuda:{device_num}') if torch.cuda.is_available() else torch.device('cpu')
 
 print(f"use device: {device}")
 
@@ -84,7 +88,7 @@ def main():
     train_data_loader = DataLoader(train_dataset, batch_size, shuffle=True)
 
 
-    model = GraphConsis(data.edge_index_train, data.combin_feats, data.device_feats, combin_category_embeds_desc, device_category_embeds_desc, hidden_size, num_classes, batch_size, p)
+    model = GraphConsis(data.edge_index_train, data.combin_feats, data.device_feats, combin_category_embeds_desc, device_category_embeds_desc, hidden_size, num_classes, batch_size, p, device)
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=2e-6)
     if resume:
