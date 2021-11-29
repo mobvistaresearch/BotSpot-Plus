@@ -1,4 +1,4 @@
-# Botspot++: A Hierarchical Deep Ensemble Model for Bots Install Fraud Detection in Mobile Advertising
+# Botspot++: A Hierarchical Deep Ensemble Model for Bots Install Fraud Detection in Mobile Advertising (https://doi.org/10.1145/3476107)
 ## Datasets
 To evaluate our proposed model more comprehensively, we built three datasets for different time periods, which are avaliable from https://drive.google.com/drive/folders/1CBIOxCtI5Ztx-E5Ua7nO0UjdEabJM2nC?usp=sharing. And The statistics data of the four offline datasets are detailed as below.
 
@@ -54,23 +54,3 @@ GraphSAGE、BotSpot、BotSpot++:
 &nbsp;&nbsp;&nbsp;&nbsp;BotSpot++ usage:  
 &nbsp;&nbsp;&nbsp;&nbsp;```python main.py --dataset dataset1 --use_gbm true --use_stratified true```  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```--use_botspot_plus true --use_self_attn true --device_num 2```
-
-@article{10.1145/3476107,
-author = {Zhu, Yadong and Wang, Xiliang and Li, Qing and Yao, Tianjun and Liang, Shangsong},
-title = {BotSpot++: A Hierarchical Deep Ensemble Model for Bots Install Fraud Detection in Mobile Advertising},
-year = {2021},
-issue_date = {July 2022},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {40},
-number = {3},
-issn = {1046-8188},
-url = {https://doi.org/10.1145/3476107},
-doi = {10.1145/3476107},
-abstract = {Mobile advertising has undoubtedly become one of the fastest-growing industries in the world. The influx of capital attracts increasing fraudsters to defraud money from advertisers. Fraudsters can leverage many techniques, where bots install fraud is the most difficult to detect due to its ability to emulate normal users by implementing sophisticated behavioral patterns to evade from detection rules defined by human experts. Therefore, we proposed BotSpot1 for bots install fraud detection previously. However, there are some drawbacks in BotSpot, such as the sparsity of the devices’ neighbors, weak interactive information of leaf nodes, and noisy labels. In this work, we propose BotSpot++ to improve these drawbacks: (1) for the sparsity of the devices’ neighbors, we propose to construct a super device node to enrich the graph structure and information flow utilizing domain knowledge and a clustering algorithm; (2) for the weak interactive information, we propose to incorporate a self-attention mechanism to enhance the interaction of various leaf nodes; and (3) for the noisy labels, we apply a label smoothing mechanism to alleviate it. Comprehensive experimental results show that BotSpot++ yields the best performance compared with six state-of-the-art baselines. Furthermore, we deploy our model to the advertising platform of Mobvista,2 a leading global mobile advertising company. The online experiments also demonstrate the effectiveness of our proposed method.},
-journal = {ACM Trans. Inf. Syst.},
-month = {nov},
-articleno = {50},
-numpages = {28},
-keywords = {Mobile ad fraud, graph neural network, bots fraud detection, app install fraud}
-}
